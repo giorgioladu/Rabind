@@ -1,0 +1,20 @@
+RaBind/
+│
+├── index.php
+├── dashboard.php
+├── users.php
+│
+├── lib/
+│   ├── config.php
+│   ├── db.php
+│   ├── auth.php
+│   └── functions.php
+│
+└── templates/
+    ├── header.php
+    ├── footer.php
+    ├── menu.php
+
+
+<?php
+echo password_hash("tua_password_forte", PASSWORD_DEFAULT);

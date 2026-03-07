@@ -4,7 +4,7 @@
 
     <div class="container">
 
-        <a class="navbar-brand" href="/dashboard.php">
+        <a class="navbar-brand" href="dashboard.php">
             <?php echo APP_NAME; ?>
         </a>
 
@@ -17,15 +17,19 @@
             <ul class="navbar-nav me-auto">
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/dashboard.php">Dashboard</a>
+                    <a class="nav-link" href="dashboard.php">Dashboard</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/users.php">Utenti</a>
+                    <a class="nav-link" href="users.php">Utenti</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="rad_main.php">RadMain</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/logs.php">Log</a>
+                    <a class="nav-link" href="logs.php">Log</a>
                 </li>
 
             </ul>
@@ -39,7 +43,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="/logout.php">
+                    <a class="nav-link text-danger" href="logout.php">
                         Logout
                     </a>
                 </li>

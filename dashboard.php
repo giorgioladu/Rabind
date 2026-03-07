@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
 
@@ -194,8 +195,6 @@ Disconnect
 </tbody>
 </table>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 

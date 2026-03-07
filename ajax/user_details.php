@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../lib/auth.php';
 requireAuth();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require_once __DIR__ . '/../lib/db.php';
 
@@ -60,11 +63,35 @@ $macs->execute([$username]);
 $macData = $macs->fetchAll(PDO::FETCH_ASSOC);
 
 
+/* =====================
+   log sessioni
+===================== */
+
+$stmt = $radiusDb->prepare("
+            SELECT
+            acctstarttime,
+            acctstoptime,
+            acctsessiontime,
+            acctinputoctets,
+            acctoutputoctets,
+            callingstationid,
+            framedipaddress
+        FROM radacct
+        WHERE username = ?
+        ORDER BY acctstarttime DESC
+        LIMIT 100
+");
+
+$stmt->execute([$username]);
+$sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 header('Content-Type: application/json');
 
 echo json_encode([
     "traffic"=>$trafficData,
     "failed"=>$failedData,
-    "macs"=>$macData
+    "macs"=>$macData,
+    "sessions"=> $sessions
 ]);
 ?>

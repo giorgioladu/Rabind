@@ -6,107 +6,140 @@ requireAuth();
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/templates/header.php';
 require_once __DIR__ . '/templates/menu.php';
-
-
 /* =========================
    LISTA UTENTI
 ========================= */
 
 $stmt = $appDb->query("
-SELECT r.username,
-       r.type,
-       r.notes,
-       r.created_at,
-       GROUP_CONCAT(DISTINCT rad.value) AS mac
-FROM rabind_users r
-LEFT JOIN radius.radcheck rad
-ON r.username = rad.username
-AND rad.attribute = 'Calling-Station-Id'
-GROUP BY r.username
+SELECT r.username, r.type, r.notes, r.created_at, GROUP_CONCAT(DISTINCT ra.callingstationid) AS mac, GROUP_CONCAT(DISTINCT rug.groupname) AS user_groups FROM rabind.rabind_users r LEFT JOIN radius.radacct ra ON r.username = ra.username LEFT JOIN radius.radusergroup rug ON r.username = rug.username GROUP BY r.username ORDER BY r.created_at DESC
 ");
 
-$users = $stmt->fetchAll();
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+/* =========================
+   FUNZIONE BADGE
+========================= */
+
+function userBadgeClass($type){
+    return match($type){
+        'disabled' => 'bg-danger',
+        'active' => 'bg-success',
+        default => 'bg-secondary'
+    };
+}
+
 ?>
 
-<div class="d-flex justify-content-between mb-3">
-    <h4>Gestione Utenti</h4>
+<div class="d-flex justify-content-between mb-4">
+    <h4>👤 Gestione Utenti</h4>
 
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    <button class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addUserModal">
         + Nuovo Utente
     </button>
 </div>
 
-<table class="table table-hover shadow-sm">
-    <thead class="table-dark">
-        <tr>
-            <th>Username / MAC</th>
-            <th>Tipo</th>
-            <th>Note</th>
-            <th>Azioni</th>
-        </tr>
-    </thead>
 
-    <tbody>
-    <?php foreach ($users as $u): ?>
-        <tr>
-            <td>
-                <a href="#"
-                onclick="showUserDetails('<?= $u['username'] ?>')">
-                <?= htmlspecialchars($u['username']) ?>
-                </a>
-                <br>
-                <small class="text-muted">
-                <?= $u['mac'] ?: '-' ?>
-                </small>
-            </td>
+<table class="table table-hover table-bordered align-middle">
 
-            <td>
-                <span class="badge bg-secondary">
-                    <?php echo $u['type']; ?>
-                </span>
-            </td>
+<thead class="table-dark">
+<tr>
+<th>Username / MAC</th>
+<th width="80">Gruppo</th>
+<th width="80">Stato</th>
+<th width="260">Note</th>
+<th width="360">Azioni</th>
+</tr>
+</thead>
 
-            <td><?php echo htmlspecialchars($u['notes']); ?></td>
+<tbody>
 
-                <td>
+<?php foreach($users as $u): ?>
 
-                <?php if($u['type'] === 'disabled'): ?>
+<tr>
 
-                <span class="btn btn-secondary btn-sm disabled">
-                Disabled
-                </span>
-
-                <?php else: ?>
-
-                <a href="user_disable.php?u=<?= urlencode($u['username']) ?>"
-                class="btn btn-warning btn-sm">
-                Disable
-                </a>
-
-                <?php endif; ?>
+<td>
+<a href="user_log.php?u=<?= urlencode($u['username']) ?>" class="fw-bold text-decoration-none text-primary">
+<?= htmlspecialchars($u['username']) ?>
+</a>
+&nbsp;&middot;&nbsp;
+<small class="text-muted">
+ <a href="#" onclick="showUserDetails('<?= htmlspecialchars($u['username']) ?>')">
+<?= htmlspecialchars($u['mac']) ?: '-' ?>
+ </a>
+</small>
+</td>
 
 
-                <a href="user_reset_mac.php?u=<?= urlencode($u['username']) ?>"
-                class="btn btn-warning btn-sm">
-                Reset MAC
-                </a>
-
-
-                <a href="user_delete.php?u=<?= urlencode($u['username']) ?>"
-                class="btn btn-danger btn-sm"
-                onclick="return confirm('Delete user permanently?')">
-                Delete
-                </a>
-
-                </td>
-        </tr>
+<td>
+<?php if(!empty($u['user_groups'])): ?>
+    <?php foreach(explode(',', $u['user_groups']) as $g): ?>
+        <span class="badge bg-info text-dark">
+            <?= htmlspecialchars($g) ?>
+        </span>
     <?php endforeach; ?>
-    </tbody>
+<?php else: ?>
+    -
+<?php endif; ?>
+</td>
+
+
+<td>
+<span class="badge <?= userBadgeClass($u['type']) ?>">
+<?= htmlspecialchars($u['type']) ?>
+</span>
+</td>
+
+
+<td>
+<?= htmlspecialchars($u['notes'] ?? '') ?>
+</td>
+
+
+<td>
+
+<!-- Toggle Enable / Disable -->
+<a href="user_disable.php?u=<?= urlencode(htmlspecialchars($u['username'])) ?>"
+class="btn <?= $u['type']==='disabled' ? 'btn-success' : 'btn-secondary' ?> btn-sm">
+<?= $u['type']==='disabled' ? 'Enable' : 'Disable' ?>
+</a>
+
+<!-- Reset MAC -->
+<a href="user_reset_mac.php?u=<?= urlencode(htmlspecialchars($u['username'])) ?>"
+class="btn btn-warning btn-sm">
+Reset MAC
+</a>
+
+<!-- Reset Traffico -->
+<a href="user_reset_traffic.php?u=<?= urlencode(htmlspecialchars($u['username'])) ?>"
+class="btn btn-dark btn-sm"
+onclick="return confirm('Azzerare traffico consumato?')">
+Reset Traffic
+</a>
+
+<!-- Delete -->
+<a href="user_delete.php?u=<?= urlencode(htmlspecialchars($u['username'])) ?>"
+class="btn btn-danger btn-sm"
+onclick="return confirm('Eliminare definitivamente?')">
+Delete
+</a>
+
+</td>
+
+</tr>
+
+<?php endforeach; ?>
+
+</tbody>
 </table>
 
+
 <!-- =========================
-   DATI UTENTE
+   MODAL DETTAGLI UTENTE
 ========================= -->
+
 <div class="modal fade" id="userModal">
 <div class="modal-dialog modal-lg">
 <div class="modal-content">
@@ -117,17 +150,16 @@ $users = $stmt->fetchAll();
 </div>
 
 <div class="modal-body">
-
 <div id="userDetailsContent"></div>
-
 </div>
 
 </div>
 </div>
 </div>
+
 
 <!-- =========================
-   MODALE AGGIUNTA UTENTE
+   MODAL CREAZIONE UTENTE
 ========================= -->
 
 <div class="modal fade" id="addUserModal">
@@ -150,25 +182,34 @@ $users = $stmt->fetchAll();
 
 <div class="mb-3">
 <label>Numero utenti</label>
-<input type="number" name="quantity" class="form-control" value="1" min="1" max="10">
+<input type="number"
+name="quantity"
+class="form-control"
+value="1"
+min="1"
+max="20">
 </div>
 
 <div class="mb-3">
 <label>Password</label>
-<input type="password" name="password" class="form-control" required>
+<input type="text"
+name="password"
+class="form-control"
+required>
 </div>
 
 <div class="mb-3">
 <label>Tipo</label>
 <select name="type" class="form-control">
-<option value="fixed">Fisso</option>
-<option value="temporary">Temporaneo</option>
+<option value="active">Active</option>
+<option value="disabled">Disabled</option>
 </select>
 </div>
 
 <div class="mb-3">
 <label>Profilo Banda</label>
 <select name="profile" class="form-control">
+<option value="Guest">Guest</option>
 <option value="basic">Basic</option>
 <option value="medium">Medium</option>
 <option value="high">High</option>
@@ -183,7 +224,9 @@ $users = $stmt->fetchAll();
 </div>
 
 <div class="modal-footer">
-<button class="btn btn-success">Salva</button>
+<button class="btn btn-success">
+Salva
+</button>
 </div>
 
 </form>
@@ -192,7 +235,6 @@ $users = $stmt->fetchAll();
 </div>
 </div>
 
-
- <script src="js/user_modal.js"></script>
+<script src="js/user_modal.js"></script>
 
 <?php require_once __DIR__ . '/templates/footer.php'; ?>

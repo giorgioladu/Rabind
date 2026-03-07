@@ -15,7 +15,7 @@ function isLoggedIn(): bool
 function requireAuth(): void
 {
     if (!isLoggedIn()) {
-        header("Location: /login.php");
+        header("Location: login.php");
         exit;
     }
 }
@@ -27,6 +27,6 @@ function logout(): void
 {
     $_SESSION = [];
     session_destroy();
-    header("Location: /login.php");
+    header("Location: login.php");
     exit;
 }

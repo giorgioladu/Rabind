@@ -1,3 +1,43 @@
+/**
+ * Converte i secondi in un formato leggibile (es: 1d 04h 20m)
+ * @param {number} seconds - Durata in secondi
+ */
+function formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return "0s";
+
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0) parts.push(`${h.toString().padStart(2, '0')}h`);
+    if (m > 0) parts.push(`${m.toString().padStart(2, '0')}m`);
+    if (s > 0 && d === 0) parts.push(`${s.toString().padStart(2, '0')}s`); // Mostra i secondi solo se < 1 giorno
+
+    return parts.join(' ');
+}
+
+/**
+ * Formatta i byte in una stringa leggibile (KB, MB, GB, etc.)
+ * @param {number} bytes - Il numero di byte da formattare
+ * @param {number} decimals - Numero di decimali da mostrare (default 2)
+ */
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
+    // Calcola l'indice dell'unità di misura
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+
 async function showUserDetails(username) {
     const res = await fetch('ajax/user_details.php?u=' + encodeURIComponent(username));
     const data = await res.json();
@@ -41,7 +81,7 @@ async function showUserDetails(username) {
 
     /* 3. MAC DEVICES & FAILED LOGINS (COMPATTI) */
     html += "<div class='row mb-4'>";
-    
+
     // Colonna MAC
     html += "<div class='col-md-6'>";
     html += "<h6>📶 MAC Registrati</h6>";
@@ -65,7 +105,7 @@ async function showUserDetails(username) {
         html += "</ul>";
     } else { html += "<p class='small text-muted text-success'>Nessun fallimento</p>"; }
     html += "</div>";
-    
+
     html += "</div>";
 
     /* 4. TABELLA SESSIONI (STORICO DETTAGLIATO) */

@@ -1,241 +1,148 @@
 <?php
-
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
-
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/templates/header.php';
+require_once __DIR__ . '/templates/menu.php';
 
-/* =========================
-   STATISTICHE BASE
-========================= */
+// 1. Fetch Stats Generali (Dalle Viste)
+$dailyStats = $radiusDb->query("SELECT * FROM view_daily_stats ORDER BY stat_day ASC")->fetchAll();
+$profileStats = $radiusDb->query("SELECT * FROM view_profile_stats")->fetchAll();
+$onlineUsers = $radiusDb->query("SELECT * FROM view_active_sessions ORDER BY acctstarttime DESC")->fetchAll();
 
-/* Utenti online */
-$stmt = $radiusDb->query("
-    SELECT COUNT(*) AS total
-    FROM radacct
-    WHERE acctstoptime IS NULL
-");
-$online_users = $stmt->fetch()['total'];
-
-/* Login success */
-$stmt = $radiusDb->query("
-    SELECT COUNT(*) AS total
-    FROM radpostauth
-    WHERE reply='Access-Accept'
-");
-$login_ok = $stmt->fetch()['total'];
-
-/* Login reject */
-$stmt = $radiusDb->query("
-    SELECT COUNT(*) AS total
-    FROM radpostauth
-    WHERE reply='Access-Reject'
-");
-$login_fail = $stmt->fetch()['total'];
-
-
-/* =========================
-   STATISTICHE 7 GIORNI
-========================= */
-
-$days = [];
-$successDays = [];
-$failDays = [];
-$trafficDays = [];
-$trafficValues = [];
-
-for ($i = 6; $i >= 0; $i--) {
-
-    $date = date('Y-m-d', strtotime("-$i days"));
-    $days[] = $date;
-
-    /* Login Success */
-    $stmt = $radiusDb->prepare("
-        SELECT COUNT(*) total
-        FROM radpostauth
-        WHERE reply='Access-Accept'
-        AND DATE(authdate)=?
-    ");
-    $stmt->execute([$date]);
-    $successDays[] = $stmt->fetch()['total'];
-
-    /* Login Fail */
-    $stmt = $radiusDb->prepare("
-        SELECT COUNT(*) total
-        FROM radpostauth
-        WHERE reply='Access-Reject'
-        AND DATE(authdate)=?
-    ");
-    $stmt->execute([$date]);
-    $failDays[] = $stmt->fetch()['total'];
-
-    /* Traffico */
-    $stmt = $radiusDb->prepare("
-        SELECT SUM(acctinputoctets + acctoutputoctets) AS traffic
-        FROM radacct
-        WHERE DATE(acctstarttime)=?
-    ");
-    $stmt->execute([$date]);
-
-    $traffic = $stmt->fetch()['traffic'] ?? 0;
-
-    $trafficDays[] = $date;
-    $trafficValues[] = round($traffic / 1048576, 2); // MB
+// 2. Preparazione dati per i grafici
+$labels = []; $successData = []; $failData = []; $downData = []; $upData = [];
+foreach($dailyStats as $s) {
+    $labels[] = date('d/m', strtotime($s['stat_day']));
+    $successData[] = (int)$s['logins_success'];
+    $failData[] = (int)$s['logins_fail'];
+    $downData[] = (float)$s['download_mb'];
+    $upData[] = (float)$s['upload_mb'];
 }
 
-   $stmt = $radiusDb->query("
-    SELECT username,
-           callingstationid,
-           framedipaddress
-    FROM radacct
-    WHERE acctstoptime IS NULL
-");
-
-$onlineUsers = $stmt->fetchAll();
-
+$groupLabels = array_column($profileStats, 'groupname');
+$groupCounts = array_column($profileStats, 'total_users');
 ?>
 
-<h3 class="mb-4">
-    <?php echo APP_NAME; ?> Dashboard
-</h3>
-
-<!-- =========================
-     CARDS STATISTICHE
-========================= -->
-
-<div class="row">
-
-    <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body text-center">
-                <h6>Utenti Online</h6>
-                <h2><?php echo $online_users; ?></h2>
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Online Now</h6>
+                    <h2 class="mb-0"><?= count($onlineUsers) ?></h2>
+                    <i class="bi bi-people position-absolute top-50 end-0 translate-middle-y me-3 opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Logins (24h)</h6>
+                    <h2 class="mb-0"><?= end($successData) ?></h2>
+                    <i class="bi bi-check-circle position-absolute top-50 end-0 translate-middle-y me-3 opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Rejects (24h)</h6>
+                    <h2 class="mb-0"><?= end($failData) ?></h2>
+                    <i class="bi bi-x-circle position-absolute top-50 end-0 translate-middle-y me-3 opacity-50 fs-1"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Total Traffic (Today)</h6>
+                    <h2 class="mb-0"><?= round(end($downData) + end($upData), 2) ?> <small>MB</small></h2>
+                    <i class="bi bi-hdd-network position-absolute top-50 end-0 translate-middle-y me-3 opacity-50 fs-1"></i>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body text-center">
-                <h6>Login Success</h6>
-                <h2 class="text-success"><?php echo $login_ok; ?></h2>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">Analisi Traffico (Download vs Upload)</div>
+                <div class="card-body"><canvas id="trafficChart" height="100"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">Distribuzione Profili</div>
+                <div class="card-body"><canvas id="profileChart"></canvas></div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body text-center">
-                <h6>Login Fail</h6>
-                <h2 class="text-danger"><?php echo $login_fail; ?></h2>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Utenti Attualmente Online</span>
+                    <a href="online_users.php" class="btn btn-sm btn-outline-primary">Vedi Tutti</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light small text-uppercase">
+                            <tr>
+                                <th>Username</th>
+                                <th>IP Address</th>
+                                <th>MAC / Device</th>
+                                <th>NAS (Router)</th>
+                                <th>Durata</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody class="small">
+                            <?php foreach(array_slice($onlineUsers, 0, 8) as $u): ?>
+                            <tr>
+                                <td class="fw-bold"><?= htmlspecialchars($u['username']) ?></td>
+                                <td><span class="text-primary"><?= $u['framedipaddress'] ?></span></td>
+                                <td><code><?= $u['callingstationid'] ?></code></td>
+                                <td><?= $u['nasipaddress'] ?></td>
+                                <td><?= $u['duration'] ?></td>
+                                <td><a href="user_disconnect.php?u=<?= urlencode($u['username']) ?>" class="btn btn-xs btn-danger">Kick</a></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-
-</div>
-
-
-<!-- =========================
-     GRAFICI
-========================= -->
-
-<div class="row mt-4">
-
-    <div class="col-md-6">
-        <div class="card shadow-sm p-3">
-            <h6 class="mb-3">Login ultimi 7 giorni</h6>
-            <canvas id="loginChart"></canvas>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm p-3">
-            <h6 class="mb-3">Traffico ultimi 7 giorni (MB)</h6>
-            <canvas id="trafficChart"></canvas>
-        </div>
-    </div>
-
-</div>
-
-<div class="card shadow-sm p-3 mt-4">
-
-<h5>Utenti Online</h5>
-
-<table class="table table-hover">
-
-<thead class="table-dark">
-<tr>
-<th>Username</th>
-<th>IP</th>
-<th>MAC</th>
-<th>Azioni</th>
-</tr>
-</thead>
-
-<tbody id="onlineUsersBody">
-
-<?php foreach($onlineUsers as $u): ?>
-<tr>
-<td><?php echo htmlspecialchars($u['username']); ?></td>
-<td><?php echo $u['framedipaddress']; ?></td>
-<td><?php echo $u['callingstationid']; ?></td>
-<td>
-
-<a class="btn btn-danger btn-sm"
-href="user_disconnect.php?u=<?php echo urlencode($u['username']); ?>">
-
-Disconnect
-
-</a>
-</td>
-</tr>
-<?php endforeach; ?>
-
-</tbody>
-</table>
 </div>
 
 <script>
+// Grafico Traffico (Stacked Bar)
+new Chart(document.getElementById('trafficChart'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode($labels) ?>,
+        datasets: [
+            { label: 'Download MB', data: <?= json_encode($downData) ?>, backgroundColor: '#4e73df' },
+            { label: 'Upload MB', data: <?= json_encode($upData) ?>, backgroundColor: '#1cc88a' }
+        ]
+    },
+    options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+});
 
-const loginChart = new Chart(
-    document.getElementById('loginChart'),
-    {
-        type: 'line',
-        data: {
-            labels: <?php echo json_encode($days); ?>,
-            datasets: [
-                {
-                    label: 'Success',
-                    data: <?php echo json_encode($successDays); ?>,
-                    borderWidth: 2
-                },
-                {
-                    label: 'Reject',
-                    data: <?php echo json_encode($failDays); ?>,
-                    borderWidth: 2
-                }
-            ]
-        }
-    }
-);
-
-const trafficChart = new Chart(
-    document.getElementById('trafficChart'),
-    {
-        type: 'bar',
-        data: {
-            labels: <?php echo json_encode($trafficDays); ?>,
-            datasets: [{
-                label: 'Traffico MB',
-                data: <?php echo json_encode($trafficValues); ?>,
-                borderWidth: 1
-            }]
-        }
-    }
-);
-
+// Grafico Profili (Doughnut)
+new Chart(document.getElementById('profileChart'), {
+    type: 'doughnut',
+    data: {
+        labels: <?= json_encode($groupLabels) ?>,
+        datasets: [{
+            data: <?= json_encode($groupCounts) ?>,
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+        }]
+    },
+    options: { cutout: '70%' }
+});
 </script>
-<script src="js/rabind_refresh.js"></script>
 
 <?php require_once __DIR__ . '/templates/footer.php'; ?>

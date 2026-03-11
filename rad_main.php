@@ -54,6 +54,20 @@ require_once __DIR__ . '/templates/menu.php';
         </div>
     </div>
 
+            <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="display-4 text-info mb-3">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Manutenzione</h5>
+                    <p class="card-text text-muted small">Se vedi utenti che sai essere offline, puoi forzare la chiusura delle sessioni vecchie.</p>
+                    <a href="stale_cleanup.php" class="btn btn-outline-info w-100 mt-2" onclick="return confirm('Vuoi chiudere tutte le sessioni attive da più di 2 ore?')" >Pulisci Sessioni</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mt-5">
         <div class="col-12">
             <div class="alert alert-light border-0 shadow-sm d-flex align-items-center">
@@ -68,7 +82,7 @@ require_once __DIR__ . '/templates/menu.php';
 
 <style>
     .hover-shadow { transition: all 0.3s ease; }
-    .hover-shadow:hover { 
+    .hover-shadow:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }

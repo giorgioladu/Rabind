@@ -25,7 +25,6 @@ $traffic = $radiusDb->prepare("
     FROM radacct
     WHERE username = ?
     ORDER BY acctstarttime DESC
-    LIMIT 20
 ");
 
 $traffic->execute([$username]);
@@ -79,7 +78,7 @@ $stmt = $radiusDb->prepare("
         FROM radacct
         WHERE username = ?
         ORDER BY acctstarttime DESC
-        LIMIT 100
+        LIMIT 20
 ");
 
 $stmt->execute([$username]);

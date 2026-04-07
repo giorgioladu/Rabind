@@ -4,7 +4,7 @@
 
     <div class="container">
 
-        <a class="navbar-brand" href="dashboard.php">
+        <a class="navbar-brand" href="<?= BASE_URL ?>dashboard.php">
             <?php echo APP_NAME; ?>
         </a>
 
@@ -17,35 +17,48 @@
             <ul class="navbar-nav me-auto">
 
                 <li class="nav-item">
-                    <a class="nav-link" href="dashboard.php">Dashboard</a>
+                    <a class="nav-link" href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="users.php">Utenti</a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="rad_main.php">RadMain</a>
+                    <a class="nav-link" href="<?= BASE_URL ?>users.php">Utenti</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="logs.php">Log</a>
+                    <a class="nav-link" href="<?= BASE_URL ?>rad_main.php">RadMain</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>logs.php">Log</a>
                 </li>
 
             </ul>
 
             <ul class="navbar-nav">
 
-                <li class="nav-item">
-                    <span class="nav-link">
-                        <?php echo $_SESSION['admin_username'] ?? ''; ?>
-                    </span>
-                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-semibold"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown">
 
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="logout.php">
-                        Logout
+                        👤 <?= htmlspecialchars($_SESSION['admin_username'] ?? '') ?>
+
                     </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="<?= BASE_URL ?>admins/index.php">
+                                Gestione Admin
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="<?= BASE_URL ?>logout.php">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
             </ul>

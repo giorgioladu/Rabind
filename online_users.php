@@ -9,13 +9,6 @@ require_once __DIR__ . '/templates/menu.php';
 $stmt = $radiusDb->query("SELECT * FROM view_online_detailed ORDER BY acctstarttime DESC");
 $online = $stmt->fetchAll();
 
-// Funzione di utilità interna per i bytes (se non è già in un file globale)
-function formatBytes($b) {
-    if ($b < 1024) return $b . " B";
-    if ($b < 1048576) return round($b / 1024, 2) . " KB";
-    if ($b < 1073741824) return round($b / 1048576, 2) . " MB";
-    return round($b / 1073741824, 2) . " GB";
-}
 ?>
 
 <div class="container-fluid mt-4">
@@ -61,12 +54,12 @@ function formatBytes($b) {
                         <td><i class="bi bi-clock-history me-1"></i><?= $u['uptime'] ?></td>
                         <td>
                             <div class="small">
-                                <i class="bi bi-arrow-down text-success"></i> <?= formatBytes($u['session_outputoctets']) ?> <br>
-                                <i class="bi bi-arrow-up text-primary"></i> <?= formatBytes($u['session_inputoctets']) ?>
+                                <i class="bi bi-arrow-down text-success"></i> DL <?= formatBytes($u['session_upload']) ?> <br>
+                                <i class="bi bi-arrow-up text-primary"></i> UL <?= formatBytes($u['session_download']) ?>
                             </div>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-danger" 
+                            <button class="btn btn-sm btn-outline-danger"
                                     onclick="kickUser('<?= urlencode($u['username']) ?>', '<?= $u['nas_name'] ?>')">
                                 <i class="bi bi-lightning-fill"></i> Disconnetti
                             </button>
@@ -89,7 +82,7 @@ function formatBytes($b) {
 document.getElementById('userSearch').addEventListener('keyup', function() {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll('#onlineTable tbody tr');
-    
+
     rows.forEach(row => {
         let text = row.textContent.toLowerCase();
         row.style.display = text.includes(filter) ? '' : 'none';

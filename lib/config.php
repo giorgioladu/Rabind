@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 define('RADIUS_DB_HOST', 'localhost');
 define('RADIUS_DB_NAME', 'radius');
 define('RADIUS_DB_USER', 'radius');
-define('RADIUS_DB_PASS', 'secret_database_radius_password');
+define('RADIUS_DB_PASS', 'secret_password');
 
 /* =========================
    RABIND APPLICATION DATABASE
@@ -23,7 +23,7 @@ define('RADIUS_DB_PASS', 'secret_database_radius_password');
 define('APP_DB_HOST', 'localhost');
 define('APP_DB_NAME', 'rabind');
 define('APP_DB_USER', 'rabind');
-define('APP_DB_PASS', 'secret_database_rabind_password');
+define('APP_DB_PASS', 'secret_password1234');
 
 /* =========================
    Application Settings
@@ -35,15 +35,15 @@ define('APP_TAGLINE', 'Lightweight RADIUS Control Panel');
 define('APP_ENV', 'production');
 define('APP_MAINTENANCE', false);
 define('APP_DEBUG', false);
-define('BASE_URL', '/rabind');
+define('BASE_URL', '/rabind/');
 
 
-define('RADIUS_NAS_IP','192.168.88.1');
+define('RADIUS_NAS_IP','192.168...RADIUS_NAS_IP');
 define('RADIUS_NAS_PORT','3799');
-define('RADIUS_SECRET','secret_radius_shared_password');
+define('RADIUS_SECRET','secret_passwordsecret123');
 
-define('SITE_WIFI_SSID', 'Wifi_SSID');
-define('SITE_WIFI_PASSWORD', 'wifi_password');
+define('SITE_WIFI_SSID', 'wifi_ssid');
+define('SITE_WIFI_PASSWORD', 'secret_password_wifi');
 
 /* =========================
    Security

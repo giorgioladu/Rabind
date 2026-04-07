@@ -84,7 +84,7 @@ foreach($sessions as $s) { $totalTraffic += ($s['acctinputoctets'] + $s['acctout
         <div class="col-md-3">
             <div class="card bg-light border-0 shadow-sm p-2 text-center">
                 <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Traffico Totale</small>
-                <div class="fw-bold text-primary"><?= round($totalTraffic / 1048576, 2) ?> MB</div>
+                <div class="fw-bold text-primary"><?= formatBytes($totalTraffic) ?></div>
             </div>
         </div>
         <div class="col-md-3">

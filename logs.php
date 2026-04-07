@@ -64,15 +64,7 @@ $stmt = $radiusDb->prepare("
 $stmt->execute($paramsAuth);
 $topAuth = $stmt->fetchAll();
 
-/**
- * Formatta i byte in formato leggibile
- */
-function formatBytes($bytes) {
-    if ($bytes <= 0) return "0 B";
-    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    $i = floor(log($bytes, 1024));
-    return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
-}
+
 
 require_once __DIR__ . '/templates/header.php';
 require_once __DIR__ . '/templates/menu.php';

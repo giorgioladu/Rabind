@@ -30,7 +30,7 @@ define('APP_DB_PASS', 'secret_password1234');
    ========================= */
 
 define('APP_NAME', 'RaBind');
-define('APP_VERSION', '0.3.5');
+define('APP_VERSION', '0.4.0');
 define('APP_TAGLINE', 'Lightweight RADIUS Control Panel');
 define('APP_ENV', 'production');
 define('APP_MAINTENANCE', false);

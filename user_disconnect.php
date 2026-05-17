@@ -1,4 +1,18 @@
 <?php
+/**
+ * user_disconnect.php
+ * Esegue il CoA Disconnect-Request verso MikroTik per un utente attivo.
+ *
+ * Sicurezza implementata:
+ *  1. requireAuth()         — solo admin autenticati
+ *  2. Solo POST             — niente kick via link GET/URL diretta
+ *  3. CSRF token            — usa requireCsrf() da auth.php
+ *  4. Validazione username  — solo caratteri ammessi (alphanumerico + . - _)
+ *  5. Verifica esistenza    — l'utente deve esistere in rabind_users
+ *  6. Sessione attiva       — deve esserci una riga aperta in radacct
+ *  7. Nessun dato sensibile — il CoA fallisce silenziosamente con redirect
+ */
+
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
 
@@ -6,24 +20,59 @@ require_once __DIR__ . '/lib/config.php';
 require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/coa.php';
 
-if(!isset($_GET['u'])){
+/* ─── 1. Solo POST ──────────────────────────────────────────────────── */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: dashboard.php");
     exit;
 }
 
-$username = $_GET['u'];
+/* ─── 2. CSRF ───────────────────────────────────────────────────────── */
+requireCsrf($_POST['csrf_token'] ?? null);
 
+/* ─── 3. Validazione username ───────────────────────────────────────── */
+$username = trim($_POST['username'] ?? '');
+
+// Ammessi: lettere, cifre, punto, trattino, underscore — max 64 caratteri
+// Stessa regex che dovresti usare anche in user_create.php
+if ($username === '' || !preg_match('/^[a-zA-Z0-9._\-]{1,64}$/', $username)) {
+    header("Location: dashboard.php?error=invalid_user");
+    exit;
+}
+
+/* ─── 4. L'utente deve esistere in rabind_users (DB locale) ────────── */
+$stmt = $appDb->prepare("SELECT id FROM rabind_users WHERE username = ? LIMIT 1");
+$stmt->execute([$username]);
+if (!$stmt->fetch()) {
+    // Username non presente nel nostro DB: potrebbe essere un tentativo
+    // di kickare un utente RADIUS non gestito da Rabind
+    header("Location: dashboard.php?error=user_not_found");
+    exit;
+}
+
+/* ─── 5. Sessione attiva in radacct ─────────────────────────────────── */
 $stmt = $radiusDb->prepare("
     SELECT acctsessionid, framedipaddress
-    FROM radacct
-    WHERE username = ?
-    AND acctstoptime IS NULL
-    LIMIT 1
+    FROM   radacct
+    WHERE  username     = ?
+      AND  acctstoptime IS NULL
+    LIMIT  1
 ");
 $stmt->execute([$username]);
 $session = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$coa = "User-Name=$username, Acct-Session-Id={$session['acctsessionid']},Framed-IP-Address={$session['framedipaddress']}";
+if (!$session) {
+    // Nessuna sessione aperta: niente CoA da inviare
+    header("Location: dashboard.php?error=no_active_session");
+    exit;
+}
+
+/* ─── 6. CoA Disconnect-Request ─────────────────────────────────────── */
+$coa = sprintf(
+    "User-Name=%s, Acct-Session-Id=%s, Framed-IP-Address=%s",
+    $username,
+    $session['acctsessionid'],
+    $session['framedipaddress']
+);
 
 radiusDisconnect(
     RADIUS_NAS_IP,
@@ -32,7 +81,6 @@ radiusDisconnect(
     $coa
 );
 
-header("Location: dashboard.php");
+/* ─── 7. Redirect con feedback ──────────────────────────────────────── */
+header("Location: dashboard.php?success=disconnected");
 exit;
-
-?>

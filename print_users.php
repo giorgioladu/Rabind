@@ -4,26 +4,42 @@ requireAuth();
 
 require_once __DIR__ . '/lib/db.php';
 
+// Controllo del metodo della richiesta: se GET riporta un errore
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    die("<h3>Errore: Metodo non consentito</h3>");
+}
+
+
+requireCsrf($_POST['csrf_token'] ?? null); // Funzione in auth.php[cite: 3]
+
 $wifi_ssid = SITE_WIFI_SSID;
 $wifi_password = SITE_WIFI_PASSWORD;
 
 $users = [];
 
-if (isset($_GET['users'])) {
+// Recupero dei dati tramite POST
+if (isset($_POST['users'])) {
+    // Gestisce sia l'array delle checkbox sia la vecchia stringa separata da virgole
+    if (is_array($_POST['users'])) {
+        $list = $_POST['users'];
+    } else {
+        $list = explode(",", $_POST['users']);
+    }
 
-    $list = explode(",", $_GET['users']);
+    if (!empty($list)) {
+        $placeholders = implode(',', array_fill(0, count($list), '?'));
 
-    $placeholders = implode(',', array_fill(0, count($list), '?'));
+        $stmt = $radiusDb->prepare("
+            SELECT username, value AS password
+            FROM radcheck
+            WHERE username IN ($placeholders)
+            AND attribute='Cleartext-Password'
+        ");
 
-    $stmt = $radiusDb->prepare("
-        SELECT username, value AS password
-        FROM radcheck
-        WHERE username IN ($placeholders)
-        AND attribute='Cleartext-Password'
-    ");
-
-    $stmt->execute($list);
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute($list);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
 
@@ -62,13 +78,30 @@ body{
     margin:10px 0;
 }
 
-button{
-    padding:10px 20px;
-    font-size:16px;
+.btn-actions {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 0 10px;
+    border-radius: 4px;
+}
+
+.btn-print {
+    background-color: #212529;
+    color: white;
+    border: none;
+}
+
+.btn-back {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #ccc;
+    text-decoration: none;
+    display: inline-block;
 }
 
 @media print{
-    button{
+    .no-print{
         display:none;
     }
 }
@@ -85,36 +118,37 @@ RaBind - Credenziali Accesso
 
 <div class="container">
 
-<?php foreach($users as $u): ?>
-
-<div class="card">
- <h4>🌐 Personal Wifi Vouchers</h4>
-<div class="wifi">
-<p>
-
-Username: <strong><?= htmlspecialchars($u['username']) ?></strong><br>
-🔑 Password:  <b><?= htmlspecialchars($u['password']) ?> </b><br><br><br>
-📶 WiFi: <b><?= $wifi_ssid ?></b><br>
-🔑 Password WiFi: <b><?= $wifi_password ?></b><br><br>
-
-<span class="note">
-✔ Valid for one device.<br>
-If you want to extend time, please contact reception.
-</span>
-
-</p>
-</div>
-
-</div>
-
-<?php endforeach; ?>
+<?php if (empty($users)): ?>
+    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+        Nessun utente selezionato o trovato.
+    </div>
+<?php else: ?>
+    <?php foreach($users as $u): ?>
+    <div class="card">
+     <h4>🌐 Personal Wifi Vouchers</h4>
+    <div class="wifi">
+    <p>
+    Username: <strong><?= htmlspecialchars($u['username']) ?></strong><br>
+    🔑 Password:  <b><?= htmlspecialchars($u['password']) ?> </b><br><br><br>
+    📶 WiFi: <b><?= $wifi_ssid ?></b><br>
+    🔑 Password WiFi: <b><?= $wifi_password ?></b><br><br>
+    <span class="note">
+    ✔ Valid for one device.<br>
+    If you want to extend time, please contact reception.
+    </span>
+    </p>
+    </div>
+    </div>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 </div>
 
 <br>
 
-<center>
-<button onclick="window.print()">🖨 Stampa</button>
+<center class="no-print">
+    <a href="users.php" class="btn-actions btn-back">⬅ Torna a Utenti</a>
+    <button onclick="window.print()" class="btn-actions btn-print">🖨 Stampa</button>
 </center>
 
 </body>

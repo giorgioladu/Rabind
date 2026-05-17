@@ -12,6 +12,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="<?= BASE_URL ?>js/user_modal.js"></script>
 <?php
 /**
  * Formatta i byte in formato leggibile
@@ -23,6 +24,39 @@ function formatBytes($bytes) {
     return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
 }
 ?>
+<?php
+/**
+ * GESTIONE FEEDBACK in dashboard.php / online_users.php
+ * ─────────────────────────────────────────────────────────────────────
+ *
+ * Legge il parametro ?success= o ?error= aggiunto dal redirect
+ * di user_disconnect.php e mostra un alert Bootstrap.
+ */
+
+$feedbackMessages = [
+    // successi
+    'disconnected'      => ['success', 'Utente disconnesso con successo.'],
+    'delete'      => ['success', 'Utente rimosso con successo.'],
+    'reset_mac'      => ['success', 'Reset MAC eseguito con successo.'],
+    'reset_traffic'      => ['success', 'Reset traffico eseguito con successo.'],
+    // errori
+    'invalid_user'      => ['danger',  'Username non valido.'],
+    'missing_user'      => ['warning',  'Username non valido.'],
+    'user_not_found'    => ['danger',  'Utente non trovato nel sistema.'],
+    'user_exists'       => ['danger',  'Utente esistente nel sistema.'],
+    'no_active_session' => ['warning', 'Nessuna sessione attiva per questo utente.'],
+];
+
+$feedbackKey = $_GET['success'] ?? $_GET['error'] ?? null;
+
+if ($feedbackKey && isset($feedbackMessages[$feedbackKey])):
+    [$type, $message] = $feedbackMessages[$feedbackKey];
+?>
+<div class="alert alert-<?= $type ?> alert-dismissible fade show" role="alert">
+    <?= htmlspecialchars($message) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/menu.php'; ?>
 

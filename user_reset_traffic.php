@@ -5,11 +5,19 @@ requireAuth();
 
 require_once __DIR__ . '/lib/db.php';
 
-if (!isset($_GET['u'])) {
-    die("Utente non specificato");
+// 1. Forza metodo POST e valida il CSRF[cite: 6]
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: users.php");
+    exit;
 }
+requireCsrf($_POST['csrf_token'] ?? null); // Funzione in auth.php[cite: 3]
 
-$username = $_GET['u'];
+// 2. Prendi lo username da POST invece che da GET
+$username = $_POST['u'] ?? '';
+if (!$username) {
+    header("Location: users.php?error=missing_user");
+    exit;
+}
 
 $stmt = $appDb->prepare("
     DELETE FROM radius.radacct
@@ -18,6 +26,6 @@ $stmt = $appDb->prepare("
 
 $stmt->execute([$username]);
 
-header("Location: users.php");
+header("Location: users.php?success=reset_traffic");
 exit;
 ?>

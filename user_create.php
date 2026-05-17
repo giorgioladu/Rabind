@@ -4,7 +4,14 @@ requireAuth();
 
 require_once __DIR__ . '/lib/db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// 1. Forza metodo POST e valida il CSRF[cite: 6]
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: users.php");
+    exit;
+}
+
+    requireCsrf($_POST['csrf_token'] ?? null); // Funzione in auth.php[cite: 3]
+
 
     $baseUsername = trim($_POST['username']);
     $passwordBase = trim($_POST['password']);
@@ -12,6 +19,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $typeProfile = $_POST['profile'] ?? 'basic';
     $notes = $_POST['notes'] ?? '';
     $quantity = intval($_POST['quantity'] ?? 1);
+
+
+        /* ==================================================
+           CONTROLLO ESISTENZA UTENTE
+        ================================================== */
+
+        // 1. Controlla nel DB RaBind
+        $stmtCheck = $appDb->prepare("SELECT id FROM rabind_users WHERE username = ?");
+        $stmtCheck->execute([$baseUsername]);
+
+        // 2. Controlla nel DB RADIUS (per sicurezza extra)
+        $stmtRadius = $radiusDb->prepare("SELECT id FROM radcheck WHERE username = ?");
+        $stmtRadius->execute([$baseUsername]);
+
+        if ($stmtCheck->fetch() || $stmtRadius->fetch()) {
+            // Se l'utente esiste in uno dei due DB, blocca tutto
+            header("Location: users.php?error=user_exists");
+            exit;
+        }
 
     /* Array utenti creati */
     $createdUsers = [];
@@ -94,4 +120,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     header("Location: users.php");
     exit;
-}
+

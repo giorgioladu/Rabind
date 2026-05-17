@@ -59,10 +59,19 @@ $online = $stmt->fetchAll();
                             </div>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-danger"
-                                    onclick="kickUser('<?= urlencode($u['username']) ?>', '<?= $u['nas_name'] ?>')">
-                                <i class="bi bi-lightning-fill"></i> Disconnetti
-                            </button>
+                                         <form method="post"
+                                          action="user_disconnect.php"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('Disconnettere <?= htmlspecialchars($u['username'], ENT_QUOTES) ?>?'); ">
+
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES) ?>">
+                                        <input type="hidden" name="username"   value="<?= htmlspecialchars($u['username'],          ENT_QUOTES) ?>">
+
+                                        <button type="submit" class="btn btn-xs btn-danger">
+                                            <i class="bi bi-x-circle"></i> Kick
+                                        </button>
+
+                                    </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>

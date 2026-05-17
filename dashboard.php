@@ -36,7 +36,7 @@ $groupLabels = array_column($profileStats, 'groupname');
 $groupCounts = array_column($profileStats, 'total_users');
 ?>
 
-<script src="js/user_modal.js"></script>
+
 
 <div class="container-fluid mt-4">
     <div class="row mb-4 g-3">
@@ -124,7 +124,22 @@ $groupCounts = array_column($profileStats, 'total_users');
                                 <td><span class="text-primary"><?= $u['framedipaddress'] ?></span></td>
                                 <td><code><?= $u['callingstationid'] ?></code></td>
                                 <td><?= $u['duration'] ?></td>
-                                <td><a href="user_disconnect.php?u=<?= urlencode($u['username']) ?>" class="btn btn-xs btn-danger">Kick</a></td>
+                                <td>
+                                    <form method="post"
+                                          action="user_disconnect.php"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('Disconnettere <?= htmlspecialchars($u['username'], ENT_QUOTES) ?>?'); ">
+
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES) ?>">
+                                        <input type="hidden" name="username"   value="<?= htmlspecialchars($u['username'],          ENT_QUOTES) ?>">
+
+                                        <button type="submit" class="btn btn-xs btn-danger">
+                                            <i class="bi bi-x-circle"></i> Kick
+                                        </button>
+
+                                    </form>
+
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>

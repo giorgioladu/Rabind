@@ -1,30 +1,45 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
 
 require_once __DIR__ . '/lib/db.php';
 
-// Controllo del metodo della richiesta: se GET riporta un errore
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    die("<h3>Errore: Metodo non consentito</h3>");
+// 2. Controllo CSRF necessario SOLO se i dati arrivano via POST (dal form principale)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf($_POST['csrf_token'] ?? null);
 }
-
-
-requireCsrf($_POST['csrf_token'] ?? null); // Funzione in auth.php[cite: 3]
 
 $wifi_ssid = SITE_WIFI_SSID;
 $wifi_password = SITE_WIFI_PASSWORD;
 
 $users = [];
 
+// 3. Recupero dei dati: controlla prima in POST, poi in GET
+$rawUsers = $_POST['users'] ?? $_GET['users'] ?? null;
+
 // Recupero dei dati tramite POST
-if (isset($_POST['users'])) {
+if ($rawUsers !== null) {
     // Gestisce sia l'array delle checkbox sia la vecchia stringa separata da virgole
-    if (is_array($_POST['users'])) {
-        $list = $_POST['users'];
+    if (is_array($rawUsers)) {
+        $list = $rawUsers;
     } else {
-        $list = explode(",", $_POST['users']);
+        $list = explode(",", $rawUsers);
     }
 
     if (!empty($list)) {
@@ -128,8 +143,8 @@ RaBind - Credenziali Accesso
      <h4>🌐 Personal Wifi Vouchers</h4>
     <div class="wifi">
     <p>
-    Username: <strong><?= htmlspecialchars($u['username']) ?></strong><br>
-    🔑 Password:  <b><?= htmlspecialchars($u['password']) ?> </b><br><br><br>
+    Username: <strong><?= htmlspecialchars($u['username'] ?? '') ?></strong><br>
+    🔑 Password:  <b><?= htmlspecialchars($u['password'] ?? '') ?> </b><br><br><br>
     📶 WiFi: <b><?= $wifi_ssid ?></b><br>
     🔑 Password WiFi: <b><?= $wifi_password ?></b><br><br>
     <span class="note">

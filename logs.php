@@ -1,4 +1,20 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 require_once __DIR__ . '/lib/auth.php';
 requireAuth(); // Verifica accesso admin
 require_once __DIR__ . '/lib/db.php'; // Connessione DB
@@ -114,7 +130,7 @@ require_once __DIR__ . '/templates/menu.php';
                             <tr>
                                 <td>
                                     <a href="user_log.php?u=<?= urlencode($t['username']) ?>" class="fw-bold text-decoration-none">
-                                        <i class="bi bi-search small"></i> <?= htmlspecialchars($t['username']) ?>
+                                        <i class="bi bi-search small"></i> <?= htmlspecialchars($t['username'] ?? '') ?>
                                     </a>
                                 </td>
                                 <td class="text-end fw-bold"><?= formatBytes($t['total_traffic']) ?></td>
@@ -137,7 +153,7 @@ require_once __DIR__ . '/templates/menu.php';
                             <tr>
                                 <td>
                                     <a href="user_log.php?u=<?= urlencode($a['username']) ?>" class="fw-bold text-decoration-none text-warning">
-                                        <i class="bi bi-person-badge"></i> <?= htmlspecialchars($a['username']) ?>
+                                        <i class="bi bi-person-badge"></i> <?= htmlspecialchars($a['username'] ?? '') ?>
                                     </a>
                                 </td>
                                 <td class="text-end fw-bold"><?= $a['attempts'] ?></td>
@@ -164,11 +180,11 @@ require_once __DIR__ . '/templates/menu.php';
                             <tr>
                                 <td class="fw-bold">
                                     <a href="user_log.php?u=<?= urlencode($f['username']) ?>" class="text-danger text-decoration-none">
-                                        <?= htmlspecialchars($f['username']) ?>
+                                        <?= htmlspecialchars($f['username'] ?? '') ?>
                                     </a>
                                 </td>
                                 <td class="small"><?= $f['authdate'] ?></td>
-                                <td><span class="badge bg-light text-danger"><?= htmlspecialchars($f['reply']) ?></span></td>
+                                <td><span class="badge bg-light text-danger"><?= htmlspecialchars($f['reply'] ?? '') ?></span></td>
                             </tr>
                             <?php endforeach; ?>
                             <?php if(empty($failed)): ?>

@@ -1,4 +1,20 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
 require_once __DIR__ . '/lib/db.php';
@@ -89,19 +105,36 @@ $nas_list = $radiusDb->query("SELECT * FROM nas ORDER BY id DESC")->fetchAll();
                 <tbody>
                     <?php foreach ($nas_list as $n): ?>
                     <tr>
-                        <td><?= $n['id'] ?></td>
-                        <td><strong class="text-primary"><?= htmlspecialchars($n['nasname']) ?></strong></td>
-                        <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($n['shortname']) ?></span></td>
-                        <td><code><?= htmlspecialchars($n['secret']) ?></code></td>
-                        <td class="small text-muted"><?= htmlspecialchars($n['description']) ?></td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary" onclick='openNasEdit(<?= json_encode($n) ?>)'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <a href="?delete=<?= $n['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Rimuovere questo NAS? Il router non potrà più autenticare gli utenti.')">
-                                <i class="bi bi-trash"></i>
-                            </a>
+                            <td><?= $n['id'] ?></td>
+                            <td><strong class="text-primary"><?= htmlspecialchars($n['nasname'] ?? '') ?></strong></td>
+                            <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($n['shortname'] ?? '') ?></span></td>
+                            <td><code><?= htmlspecialchars($n['secret'] ?? '') ?></code></td>
+                            <td class="small text-muted"><?= htmlspecialchars($n['description'] ?? '') ?></td>
+
+                         <td class="text-end">
+                            <div class="btn-group" role="group">
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-primary btn-sm px-3"
+                                    onclick='openNasEdit(<?= json_encode($n) ?>)'
+                                    title="Modifica NAS"
+                                >
+                                    <i class="bi bi-pencil">Modifica</i>
+                                </button>
+
+                                <a
+                                    href="?delete=<?= (int)$n['id'] ?>"
+                                    class="btn btn-outline-danger btn-sm px-3"
+                                    onclick="return confirm('Rimuovere questo NAS? Il router non potrà più autenticare gli utenti.')"
+                                    title="Elimina NAS"
+                                >
+                                    <i class="bi bi-trash">Elimina</i>
+                                </a>
+
+                            </div>
                         </td>
+
                     </tr>
                     <?php endforeach; ?>
                     <?php if(empty($nas_list)): ?>
@@ -122,7 +155,7 @@ $nas_list = $radiusDb->query("SELECT * FROM nas ORDER BY id DESC")->fetchAll();
       </div>
       <div class="modal-body">
         <input type="hidden" name="id" id="nas-id">
-        
+
         <div class="mb-3">
             <label class="form-label fw-bold">NAS IP / Hostname</label>
             <input type="text" name="nasname" id="nas-name" class="form-control" placeholder="es: 192.168.1.1" required>

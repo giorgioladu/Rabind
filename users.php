@@ -1,4 +1,20 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
@@ -70,17 +86,17 @@ function renderUserTable($users, $tableId) {
             <?php foreach($users as $u): ?>
                     <tr>
                     <td class="text-center">
-                        <input type="checkbox" name="users[]" value="<?= htmlspecialchars($u['username']) ?>" class="form-check-input user-checkbox">
+                        <input type="checkbox" name="users[]" value="<?= htmlspecialchars($u['username'] ?? '') ?>" class="form-check-input user-checkbox">
                     </td>
 
                     <td>
-                    <a href="user_log.php?u=<?= urlencode($u['username']) ?>" class="fw-bold text-decoration-none text-primary">
-                    <?= htmlspecialchars($u['username']) ?>
+                    <a href="user_log.php?u=<?= urlencode($u['username'] ?? '') ?>" class="fw-bold text-decoration-none text-primary">
+                    <?=  htmlspecialchars($u['username'] ?? '')?>
                     </a>
                     &nbsp;&middot;&nbsp;
                     <small class="text-muted">
-                      <a href="javascript:void(0)" onclick="showUserDetails('<?= htmlspecialchars($u['username']) ?>')">
-                                        <?= htmlspecialchars($u['mac']) ?: '----' ?>
+                      <a href="javascript:void(0)" onclick="showUserDetails('<?= htmlspecialchars($u['username'] ?? '') ?>')">
+                                        <?= htmlspecialchars($u['mac'] ?? '') ?: '----' ?>
                       </a>
                     </small>
                     </td>
@@ -90,7 +106,7 @@ function renderUserTable($users, $tableId) {
                     <?php if(!empty($u['user_groups'])): ?>
                         <?php foreach(explode(',', $u['user_groups']) as $g): ?>
                             <span class="badge bg-info text-dark">
-                                <?= htmlspecialchars($g) ?>
+                                <?= htmlspecialchars($g ?? '') ?>
                             </span>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -101,7 +117,7 @@ function renderUserTable($users, $tableId) {
 
                     <td>
                     <span class="badge <?= userBadgeClass($u['type']) ?>">
-                    <?= htmlspecialchars($u['type']) ?>
+                    <?= htmlspecialchars($u['type'] ?? '') ?>
                     </span>
                     </td>
 
@@ -113,15 +129,15 @@ function renderUserTable($users, $tableId) {
 
                     <td>
 
-                    <button type="submit" form="actionForm" formaction="user_disable.php" name="u" value="<?= htmlspecialchars($u['username']) ?>" class="btn <?= $u['type']==='disabled' ? 'btn-success' : 'btn-secondary' ?> btn-sm">
+                    <button type="submit" form="actionForm" formaction="user_disable.php" name="u" value="<?= htmlspecialchars($u['username'] ?? '') ?>" class="btn <?= $u['type']==='disabled' ? 'btn-success' : 'btn-secondary' ?> btn-sm">
                         <?= $u['type']==='disabled' ? 'Enable' : 'Disable' ?>
                     </button>
 
-                    <button type="submit" form="actionForm" formaction="user_reset_mac.php" name="u" value="<?= htmlspecialchars($u['username']) ?>" class="btn btn-warning btn-sm" onclick="return confirm('Reset MAC?')">Reset MAC</button>
+                    <button type="submit" form="actionForm" formaction="user_reset_mac.php" name="u" value="<?= htmlspecialchars($u['username'] ?? '') ?>" class="btn btn-warning btn-sm" onclick="return confirm('Reset MAC?')">Reset MAC</button>
 
-                    <button type="submit" form="actionForm" formaction="user_reset_traffic.php" name="u" value="<?= htmlspecialchars($u['username']) ?>" class="btn btn-dark btn-sm" onclick="return confirm('Azzerare traffico consumato?')">Reset Traffic</button>
+                    <button type="submit" form="actionForm" formaction="user_reset_traffic.php" name="u" value="<?= htmlspecialchars($u['username'] ?? '') ?>" class="btn btn-dark btn-sm" onclick="return confirm('Azzerare traffico consumato?')">Reset Traffic</button>
 
-                    <button type="submit" form="actionForm" formaction="user_delete.php" name="u" value="<?= htmlspecialchars($u['username']) ?>" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare definitivamente?')">Delete</button>
+                    <button type="submit" form="actionForm" formaction="user_delete.php" name="u" value="<?= htmlspecialchars($u['username'] ?? '') ?>" class="btn btn-danger btn-sm" onclick="return confirm('Eliminare definitivamente?')">Delete</button>
 
                     </td>
 

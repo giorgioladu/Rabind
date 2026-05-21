@@ -1,4 +1,19 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
 
 require_once __DIR__ . '/lib/auth.php';
 requireAuth();
@@ -44,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* LOAD DATA */
 $stmt = $radiusDb->query("
-    SELECT * 
+    SELECT *
     FROM radgroupreply
     ORDER BY groupname ASC, attribute ASC
 ");
@@ -56,8 +71,6 @@ foreach ($rows as $r) {
     $groups[$r['groupname']][] = $r;
 }
 ?>
-
-<?php include "header.php"; ?>
 
 <div class="container-fluid mt-4">
 
@@ -91,13 +104,13 @@ foreach ($rows as $r) {
             <tbody>
             <?php foreach ($items as $r): ?>
                 <tr>
-                    <td><?= htmlspecialchars($r['attribute']) ?></td>
+                    <td><?= htmlspecialchars($r['attribute'] ?? '') ?></td>
                     <td>
                         <span class="badge bg-info text-dark">
                             <?= $r['op'] ?>
                         </span>
                     </td>
-                    <td><?= htmlspecialchars($r['value']) ?></td>
+                    <td><?= htmlspecialchars($r['value'] ?? '') ?></td>
                     <td>
                         <button class="btn btn-warning btn-sm"
                             onclick='openEdit(<?= json_encode($r) ?>)'>
@@ -130,7 +143,7 @@ foreach ($rows as $r) {
       </div>
       <div class="modal-body">
         <input type="hidden" name="id" id="form-id">
-        
+
         <div class="mb-3">
             <label class="form-label fw-bold">Nome Gruppo</label>
             <input type="text" name="groupname" id="form-group" class="form-control" required>
@@ -197,7 +210,7 @@ function applyPreset(attr, op, val) {
     document.getElementById('form-attribute').value = attr;
     document.getElementById('form-op').value = op;
     document.getElementById('form-value').value = val;
-    
+
     // Piccolo feedback visivo
     const input = document.getElementById('form-attribute');
     input.classList.add('is-valid');
@@ -214,7 +227,7 @@ function setPreset(attr, op, val) {
     document.getElementById('form-attribute').value = attr;
     document.getElementById('form-op').value = op;
     document.getElementById('form-value').value = val;
-    
+
     // Evidenzia brevemente i campi per confermare l'inserimento
     const fields = ['form-attribute', 'form-value'];
     fields.forEach(f => {
@@ -224,6 +237,4 @@ function setPreset(attr, op, val) {
     });
 }
 </script>
-
-
-<?php include "footer.php"; ?>
+<?php  require_once __DIR__ . '/templates/footer.php'; ?>

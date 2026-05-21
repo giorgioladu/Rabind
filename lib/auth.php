@@ -1,4 +1,20 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 require_once __DIR__ . '/config.php';
 
 /**
@@ -47,11 +63,6 @@ function protectWriteOperations(): void
 
 /**
  * Require authentication.
- *
- * Garantisce anche che il token CSRF esista sempre in sessione,
- * indipendentemente da quando la sessione è stata creata.
- * In questo modo i template possono usare $_SESSION['csrf_token']
- * senza rischiare un Undefined index / errore 500.
  */
 function requireAuth(): void
 {
@@ -60,10 +71,65 @@ function requireAuth(): void
         exit;
     }
 
-    // Genera il token se manca (es. sessioni pre-esistenti senza token,
-    // o prima del login con token generato solo in login.php)
+    checkSessionTimeout();
+
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+}
+
+/**
+ * Controlla il timeout della sessione (CORRETTO: rimosso 'private')
+ */
+function checkSessionTimeout(): void
+{
+    if (isset($_SESSION['login_time'])) {
+        if ((time() - $_SESSION['login_time']) > SESSION_TIMEOUT) {
+            session_destroy();
+            header("Location: login.php?timeout=1");
+            exit;
+        }
+        $_SESSION['login_time'] = time();
+    }
+}
+
+/**
+ * Verifica se l'IP o l'username sono temporaneamente bloccati per troppi tentativi falliti.
+ * Soglia: max 5 tentativi negli ultimi 10 minuti.
+ */
+function isBruteForce(PDO $db, string $username, string $ip): bool
+{
+    $max_attempts = 5;
+    $time_window = '10 MINUTE';
+
+    $sql = "SELECT COUNT(*) FROM login_attempts
+            WHERE (username = :username OR ip = :ip)
+            AND attempt_time > NOW() - INTERVAL $time_window";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        'username' => $username,
+        'ip' => $ip
+    ]);
+
+    return ((int)$stmt->fetchColumn()) >= $max_attempts;
+}
+
+/**
+ * Registra un tentativo di login fallito nel database e pulisce i vecchi record.
+ */
+function registerLoginAttempt(PDO $db, string $username, string $ip): void
+{
+    // Inserisce il tentativo fallito
+    $stmt = $db->prepare("INSERT INTO login_attempts (username, ip) VALUES (:username, :ip)");
+    $stmt->execute([
+        'username' => $username,
+        'ip' => $ip
+    ]);
+
+    // Garbage collector: cancella i record più vecchi di 24 ore per mantenere la tabella leggera
+    if (rand(1, 100) === 1) { // 1% di probabilità ad ogni tentativo fallito per non appesantire la query
+        $db->exec("DELETE FROM login_attempts WHERE attempt_time < NOW() - INTERVAL 1 DAY");
     }
 }
 

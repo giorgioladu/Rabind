@@ -33,3 +33,29 @@ CREATE TABLE mac_to_user (
 
 CREATE INDEX radacct_user_time
 ON radacct(username, acctstarttime);
+
+CREATE TABLE login_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50),
+    ip VARCHAR(45),
+    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (username, ip, attempt_time)
+);
+
+CREATE TABLE audit_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT NULL,            -- ID dell'amministratore che ha eseguito l'azione (NULL se di sistema)
+    admin_username VARCHAR(50),   -- Username dell'amministratore (per storico se l'utente viene rimosso)
+    ip VARCHAR(45),               -- Indirizzo IP di chi ha effettuato la modifica (supporta IPv4 e IPv6)
+    action_type VARCHAR(10),      -- Tipo di operazione: INSERT, UPDATE o DELETE
+    target_table VARCHAR(50),     -- La tabella che è stata modificata (es. users, nas, config)
+    payload LONGTEXT,             -- I parametri passati alla query codificati in JSON (e sanitizzati)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Indici per ottimizzare la ricerca e i filtri nel pannello di controllo
+    INDEX idx_admin (admin_id),
+    INDEX idx_action (action_type),
+    INDEX idx_table (target_table),
+    INDEX idx_date (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
